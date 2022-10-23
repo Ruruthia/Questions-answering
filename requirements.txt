@@ -12,3 +12,7 @@ python-dotenv>=0.5.1
 
 # backwards compatibility
 pathlib2
+
+# chatbot
+pytorch-lightning==1.7.7
+transformers==4.23.1
