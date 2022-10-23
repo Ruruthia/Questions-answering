@@ -1,6 +1,4 @@
-from typing import List
-
-from src.models.papugapt import PapugaPT2
+from src.models.papugapt import PapuGaPT2
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -13,8 +11,11 @@ GENERATION_CONFIG = {
 
 
 def modify_prompt(raw_prompt: str) -> str:
-    # TODO
-    return raw_prompt
+    new_prompt = f"""
+    Pytanie: {raw_prompt}
+    Odpowiedź: 
+    """
+    return new_prompt
 
 
 def modify_response(response: str) -> str:
@@ -22,20 +23,20 @@ def modify_response(response: str) -> str:
     return response
 
 
-def get_best_response(responses_list: List[str]) -> str:
+def get_best_response(responses_list: list[str]) -> str:
     # TODO
     return modify_response(responses_list[0])
 
 
-model = PapugaPT2()
+model = PapuGaPT2()
 
 if __name__ == "__main__":
     prompt = None
+    print("Przywitaj się")
     while prompt != END_OF_CONVERSATION_PROMPT:
         prompt = input()
         responses = model.respond_to_prompt(
             prompt=modify_prompt(prompt),
-            generate_config=GENERATION_CONFIG,
+            generation_config=GENERATION_CONFIG,
         )
         print(get_best_response(responses))
-

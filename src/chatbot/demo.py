@@ -1,4 +1,4 @@
-from src.models.papugapt import PapugaPT2
+from src.models.papugapt import PapuGaPT2
 
 GENERATION_CONFIG = {
     "do_sample": True,
@@ -12,7 +12,7 @@ PROMPT = "Hej! Jak Ci mija dzień?"
 
 if __name__ == "__main__":
 
-    model = PapugaPT2()
+    model = PapuGaPT2()
     responses = model.respond_to_prompt(PROMPT, GENERATION_CONFIG)
     for i in range(GENERATION_CONFIG["num_return_sequences"]):
         print(f'{i}: {responses[i]} \n')
