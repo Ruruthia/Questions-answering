@@ -3,7 +3,7 @@ from typing import List
 from src.models.papugapt import PapugaPT2
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
-GENERATE_CONFIG = {
+GENERATION_CONFIG = {
     "do_sample": True,
     "max_length": 50,
     "top_k": 50,
@@ -30,12 +30,12 @@ def get_best_response(responses_list: List[str]) -> str:
 model = PapugaPT2()
 
 if __name__ == "__main__":
-    while True:
+    prompt = None
+    while prompt != END_OF_CONVERSATION_PROMPT:
         prompt = input()
         responses = model.respond_to_prompt(
             prompt=modify_prompt(prompt),
-            generate_config=GENERATE_CONFIG,
+            generate_config=GENERATION_CONFIG,
         )
         print(get_best_response(responses))
-        if prompt == END_OF_CONVERSATION_PROMPT:
-            break
+
