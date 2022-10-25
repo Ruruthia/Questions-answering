@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List
 
 from pytorch_lightning import LightningModule
 from transformers import set_seed, AutoTokenizer, AutoModelForCausalLM
@@ -11,7 +11,7 @@ class PapuGaPT2(LightningModule):
         self._tokenizer = AutoTokenizer.from_pretrained('flax-community/papuGaPT2')
         set_seed(42)
 
-    def respond_to_prompt(self, prompt: str, generation_config: dict[str, Any]) -> list[str]:
+    def respond_to_prompt(self, prompt: str, generation_config: Dict[str, Any]) -> List[str]:
         input_ids = self._tokenizer.encode(prompt, return_tensors='pt')
         output = self._model.generate(
             input_ids,

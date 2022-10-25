@@ -1,5 +1,6 @@
 from src.models.papugapt import PapuGaPT2
 from src.models.task.model import TaskOrientedChatbot
+from typing import List
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -24,7 +25,7 @@ def modify_response(response: str) -> str:
     return response
 
 
-def get_best_response(responses_list: list[str]) -> str:
+def get_best_response(responses_list: List[str]) -> str:
     # TODO
     return modify_response(responses_list[0])
 
