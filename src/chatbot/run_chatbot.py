@@ -1,4 +1,5 @@
 from src.models.papugapt import PapuGaPT2
+from src.models.task.model import TaskOrientedChatbot
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -33,6 +34,7 @@ def detect_task(raw_prompt: str) -> bool:
     return False
 
 model = PapuGaPT2()
+task_model = TaskOrientedChatbot()
 
 if __name__ == "__main__":
     prompt = None
@@ -40,13 +42,13 @@ if __name__ == "__main__":
     print("Przywitaj się")
     while prompt != END_OF_CONVERSATION_PROMPT:
         prompt = input()
-        if continue_task:
-            0 # TODO
-        elif detect_task(prompt):
-            0  # TODO
+        if continue_task or detect_task(prompt):
+            response = task_model.interact(prompt)
+            continue_task = not task_model._is_completed()
+            print(response)
         else:
             responses = model.respond_to_prompt(
                 prompt=modify_prompt(prompt),
                 generation_config=GENERATION_CONFIG,
             )
-        print(get_best_response(responses))
+            print(get_best_response(responses))
