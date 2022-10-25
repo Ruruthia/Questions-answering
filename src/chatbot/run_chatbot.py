@@ -28,15 +28,25 @@ def get_best_response(responses_list: list[str]) -> str:
     return modify_response(responses_list[0])
 
 
+def detect_task(raw_prompt: str) -> bool:
+    # TODO
+    return False
+
 model = PapuGaPT2()
 
 if __name__ == "__main__":
     prompt = None
+    continue_task = False
     print("Przywitaj się")
     while prompt != END_OF_CONVERSATION_PROMPT:
         prompt = input()
-        responses = model.respond_to_prompt(
-            prompt=modify_prompt(prompt),
-            generation_config=GENERATION_CONFIG,
-        )
+        if continue_task:
+            0 # TODO
+        elif detect_task(prompt):
+            0  # TODO
+        else:
+            responses = model.respond_to_prompt(
+                prompt=modify_prompt(prompt),
+                generation_config=GENERATION_CONFIG,
+            )
         print(get_best_response(responses))
