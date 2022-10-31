@@ -3,7 +3,6 @@ from src.models.papugapt import PapuGaPT2
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
     "do_sample": True,
-    "max_length": 50,
     "top_k": 50,
     "top_p": 0.95,
     "num_return_sequences": 3,
@@ -12,11 +11,26 @@ GENERATION_CONFIG = {
 
 
 def modify_prompt(raw_prompt: str) -> str:
-    new_prompt = f"""
-    Pytanie: {raw_prompt}
-    Odpowiedź: 
+    conversation_samples = """A: Jak się masz?
+    B: Dobrze, a Ty?
+    A: Też nieźle. Co dziś robisz?
+    B: Idę do biblioteki, muszę uczyć się na egzamin w przyszłym tygodniu.
+    A: O nie. Ok, w takim razie porozmawiamy później. Powodzenia!
+    B: Dzięki. Do zobaczenia.
+    ###
+    A: Cześć!
+    B: Hej!
+    A: Czy lubisz oglądać filmy?
+    B: Lubię, zwłaszcza w kinie.
+    A: Jaki jest Twój ulubiony gatunek?
+    B: Najbardziej lubię filmy akcji.
+    ###
     """
-    return new_prompt
+
+    prompt_start = f"""A: {raw_prompt}
+    B:"""
+
+    return conversation_samples + prompt_start
 
 
 def modify_response(response: str) -> str:
@@ -39,5 +53,7 @@ if __name__ == "__main__":
         responses = model.respond_to_prompt(
             prompt=modify_prompt(prompt),
             generation_config=GENERATION_CONFIG,
+            end_sequence="###",
+            max_response_length=20,
         )
         print(get_best_response(responses))
