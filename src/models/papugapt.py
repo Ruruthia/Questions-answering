@@ -16,12 +16,10 @@ class PapuGaPT2(LightningModule):
             prompt: str,
             generation_config: dict[str, Any],
             end_sequence: str,
-            max_response_length: int,
             ) -> list[str]:
         input_ids = self._tokenizer.encode(prompt, return_tensors='pt')
         output = self._model.generate(
             input_ids,
-            max_length=len(prompt) + max_response_length,
             pad_token_id=self._tokenizer.eos_token_id,
             eos_token_id=self._tokenizer.convert_tokens_to_ids(end_sequence),
             **generation_config
