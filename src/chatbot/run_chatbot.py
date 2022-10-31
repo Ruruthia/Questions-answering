@@ -7,6 +7,7 @@ GENERATION_CONFIG = {
     "top_k": 50,
     "top_p": 0.95,
     "num_return_sequences": 3,
+    "no_repeat_ngram_size": 3,
 }
 
 
