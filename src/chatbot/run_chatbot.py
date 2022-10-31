@@ -7,35 +7,47 @@ GENERATION_CONFIG = {
     "top_p": 0.95,
     "num_return_sequences": 3,
     "no_repeat_ngram_size": 3,
+    "max_new_tokens": 50,
 }
 
+CONVERSATION_SAMPLES = """A: Jak się masz?
+B: Dobrze, a Ty?
+A: Też nieźle. Co dziś robisz?
+B: Idę do biblioteki, muszę uczyć się na egzamin w przyszłym tygodniu.
+A: O nie. Ok, w takim razie porozmawiamy później. Powodzenia!
+B: Dzięki. Do zobaczenia.
+###
+A: Cześć!
+B: Hej!
+A: Czy lubisz oglądać filmy?
+B: Lubię, zwłaszcza w kinie.
+A: Jaki jest Twój ulubiony gatunek?
+B: Najbardziej lubię filmy akcji.
+###
+"""
+NUM_CONVERSATION_SAMPLES = len(CONVERSATION_SAMPLES.split('###')) - 1
 
 def modify_prompt(raw_prompt: str) -> str:
-    conversation_samples = """A: Jak się masz?
-    B: Dobrze, a Ty?
-    A: Też nieźle. Co dziś robisz?
-    B: Idę do biblioteki, muszę uczyć się na egzamin w przyszłym tygodniu.
-    A: O nie. Ok, w takim razie porozmawiamy później. Powodzenia!
-    B: Dzięki. Do zobaczenia.
-    ###
-    A: Cześć!
-    B: Hej!
-    A: Czy lubisz oglądać filmy?
-    B: Lubię, zwłaszcza w kinie.
-    A: Jaki jest Twój ulubiony gatunek?
-    B: Najbardziej lubię filmy akcji.
-    ###
-    """
 
     prompt_start = f"""A: {raw_prompt}
-    B:"""
+B:"""
 
-    return conversation_samples + prompt_start
+    return CONVERSATION_SAMPLES + prompt_start
 
 
 def modify_response(response: str) -> str:
-    # TODO
-    return response
+    # Take the first block after our samples
+    # We can't simply take the last, as the model would sometimes generate '###' in response
+    response = response.split('###')[NUM_CONVERSATION_SAMPLES]
+    # Leave only the part after the first 'B:'
+    response = response.partition('B:')[2]
+    # Leave only the first line
+    response = response.partition('\n')[0]
+    # Remove everything after the last '.', '!', or '?'.
+    last_sentence_end_index = max(response.rfind('.'), response.rfind('?'), response.rfind('!'))
+    if last_sentence_end_index != -1:   # -1 means none were found
+        response = response[:last_sentence_end_index+1]
+    return response.strip()
 
 
 def get_best_response(responses_list: list[str]) -> str:
@@ -54,6 +66,5 @@ if __name__ == "__main__":
             prompt=modify_prompt(prompt),
             generation_config=GENERATION_CONFIG,
             end_sequence="###",
-            max_response_length=20,
         )
         print(get_best_response(responses))
