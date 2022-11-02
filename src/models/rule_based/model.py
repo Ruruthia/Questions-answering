@@ -1,10 +1,10 @@
 class TaskOrientedChatbot:
     def __init__(self):
-        self.done = False
-        self.collected_data = self._init_data()
-        self.stage = 0
+        self._done = False
+        self._collected_data = self._init_data()
+        self._stage = 0
         "possible stages:\n"
-        "        0. ask to confirm task start\n"
+        "        0. ask to confirm rule_based start\n"
         "        1. confirm start\n"
         "        2. ask for information\n"
         "           provide answer\n"
@@ -12,11 +12,11 @@ class TaskOrientedChatbot:
         "           ask for rechecking\n"
         "        4. confirm rechecking\n"
         "        5. recheck information\n"
-        self.current_field = None
+        self._current_field = None
 
 
-    def _is_completed(self):
-        return self.done
+    def is_completed(self):
+        return self._done
 
     @staticmethod
     def _init_data():
@@ -58,10 +58,10 @@ class TaskOrientedChatbot:
             )
         )
 
-    def _detect_confirmation(self, prompt):
-        if 'tak' in prompt:
+    def _detect_confirmation(self, prompt: str) -> bool | type(None):
+        if 'tak' in prompt.lower():
             return True
-        elif 'nie' in prompt:
+        elif 'nie' in prompt.lower():
             return False
         return None
 
@@ -71,32 +71,32 @@ class TaskOrientedChatbot:
                 self.current_field = k
                 return v['question']
 
-    def _retrive_info(self, prompt):
-        0  # TODO
-
-
-    def _check_answer(self, recheck=False):
+    def _retrive_info(self, prompt: str) -> type(None):
         return None
 
-    def _check_data(self):
+
+    def _check_answer(self, recheck: bool = False) -> bool | type(None):
+        return True
+
+    def _check_data(self) -> type(None):
         for k, v in self.collected_data.items():
             if not v["check"]:
                 self.current_field = k
                 return f"Czy {k} to {v['value']}"  # TODO: provide polish names
         return None
 
-    def _reset(self):
+    def _reset(self) -> str:
         self.done = False
         self.collected_data = self._init_data()
         return "To o czym my tu rozmawialiśmy?"
 
-    def interact(self, prompt):
+    def interact(self, prompt: str) -> str:
         response = ""
-        if self.stage == 0:
+        if self.stage == 0:  # ask to confirm rule_based start
             self.stage = 1
             response = "Czy chcesz żebym sprawdził, gdzie masz zajęcia?"
 
-        elif self.stage == 1:
+        elif self.stage == 1:  # confirm start
             confirmation = self._detect_confirmation(prompt)
             if confirmation is None:
                 response = "Nie rozumiem. Czy chcesz żebym sprawdził, gdzie masz zajęcia?"
@@ -105,7 +105,7 @@ class TaskOrientedChatbot:
             else:
                 response = self._reset()
 
-        if self.stage == 2:
+        if self.stage == 2:  # ask for information
             # save data from prompt
             self._retrive_info(prompt)
 
@@ -117,7 +117,7 @@ class TaskOrientedChatbot:
                 response = f"Zajęcia odbywają się w sali {ans}. Czy to było pomocne?"
                 self.stage = 3
 
-        elif self.stage == 3:
+        elif self.stage == 3:  # confirm end
             confirmation = self._detect_confirmation(prompt)
             if confirmation is None:
                 response = "Nie rozumiem. Czy odpowiedź jest pomocna?"
@@ -126,14 +126,14 @@ class TaskOrientedChatbot:
             else:
                 response = "Czy chcesz sprawdzić jeszcze raz?"
 
-        elif self.stage == 4:
+        elif self.stage == 4:  # confirm rechecking
             confirmation = self._detect_confirmation(prompt)
             if confirmation:
                 self.stage = 5
             else:
                 response = self._reset()
 
-        if self.stage == 5:
+        if self.stage == 5:  # recheck information
             self._retrive_info(prompt)
 
             ans = self._check_answer(recheck=True)
