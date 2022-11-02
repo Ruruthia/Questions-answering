@@ -51,7 +51,7 @@ def modify_response(response: str) -> str:
     return response.strip()
 
 
-def get_best_response(responses_list: List[str]) -> str:
+def get_best_response(responses_list: list[str]) -> str:
     # TODO
     return modify_response(responses_list[0])
 
