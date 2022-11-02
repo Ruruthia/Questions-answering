@@ -1,5 +1,5 @@
 from src.models.papugapt import PapuGaPT2
-from src.models.task.model import TaskOrientedChatbot
+from src.models.rule_based.model import TaskOrientedChatbot
 from typing import List
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
@@ -45,7 +45,7 @@ if __name__ == "__main__":
         prompt = input()
         if continue_task or detect_task(prompt):
             response = task_model.interact(prompt)
-            continue_task = not task_model._is_completed()
+            continue_task = not task_model.is_completed()
             print(response)
         else:
             responses = model.respond_to_prompt(
