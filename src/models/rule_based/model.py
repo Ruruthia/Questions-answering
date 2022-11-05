@@ -1,4 +1,7 @@
 import pandas as pd
+import re
+
+
 class TaskOrientedChatbot:
     def __init__(self,  path: str="."):
         self._done = True
@@ -79,15 +82,23 @@ class TaskOrientedChatbot:
     def _retrive_info(self, prompt: str) -> type(None):
         if self._current_field is not None:
             for v in self.schedule[self._current_field].values:
-                if str(v).lower() in prompt.lower():
-                    self._collected_data[self._current_field]['value'] = v
+                # TODO look for aliases
+                aliases = [c for c in self.schedule.columns if re.compile(self._current_field).match(c)]
+                for v2 in self.schedule.loc[self.schedule[self._current_field] == v, aliases].values.reshape(-1):
+                    if str(v2).lower() in prompt.lower():
+                        self._collected_data[self._current_field]['value'] = v
         return None
 
     def _check_answer(self, recheck: bool = False) -> int | type(None):
         res = 0
+        curr_view = self.schedule.copy()
         for k, v in self._collected_data.items():
             if v['value'] is None:
                 res = None
+            else:
+                curr_view = curr_view.loc[curr_view[k] == v['value'], :]
+        if curr_view.shape[0] == 1:
+            res = curr_view['room'].values[0]
         return res
 
     def _check_data(self) -> type(None):
