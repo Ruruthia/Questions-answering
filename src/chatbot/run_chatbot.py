@@ -69,8 +69,10 @@ if __name__ == "__main__":
     prompt = None
     continue_task = False
     print("Przywitaj się")
-    while prompt != END_OF_CONVERSATION_PROMPT:
+    while True:
         prompt = input()
+        if prompt == END_OF_CONVERSATION_PROMPT:
+            break
         if continue_task or detect_task(prompt):
             response = task_model.interact(prompt)
             continue_task = not task_model.is_completed()
