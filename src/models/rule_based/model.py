@@ -42,12 +42,12 @@ class TaskOrientedChatbot:
                 question="O jaki przedmiot pytasz?",
                 check=False
             ),
-            room=dict(
-                data_type=int,
-                value=None,
-                question="W jakiej sali odbywają się zajęcia?",
-                check=False
-            ),
+            # room=dict(
+            #     data_type=int,
+            #     value=None,
+            #     question="W jakiej sali odbywają się zajęcia?",
+            #     check=False
+            # ),
             start_hour=dict(
                 data_type=int,
                 value=None,
@@ -73,21 +73,27 @@ class TaskOrientedChatbot:
     def _ask_for_data(self):
         for k, v in self._collected_data.items():
             if v["value"] is None:
-                self.current_field = k
+                self._current_field = k
                 return v['question']
 
     def _retrive_info(self, prompt: str) -> type(None):
-        # TODO
+        if self._current_field is not None:
+            for v in self.schedule[self._current_field].values:
+                if str(v).lower() in prompt.lower():
+                    self._collected_data[self._current_field]['value'] = v
         return None
 
     def _check_answer(self, recheck: bool = False) -> int | type(None):
-        # TODO
-        return 0
+        res = 0
+        for k, v in self._collected_data.items():
+            if v['value'] is None:
+                res = None
+        return res
 
     def _check_data(self) -> type(None):
         for k, v in self._collected_data.items():
             if not v["check"]:
-                self.current_field = k
+                self._current_field = k
                 return f"Czy {k} to {v['value']}"  # TODO: provide polish names
         return None
 
