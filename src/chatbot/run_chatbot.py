@@ -1,5 +1,6 @@
 from src.models.papugapt import PapuGaPT2
 from src.models.rule_based.model import TaskOrientedChatbot
+import re
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -57,8 +58,9 @@ def get_best_response(responses_list: list[str]) -> str:
 
 
 def detect_task(raw_prompt: str) -> bool:
-    # TODO
-    return False
+    pattern = re.compile(".*(gdzie|w której sali).*(zajęcia|ćwiczenia|wykład|laboratoria).*")
+    res = pattern.search(raw_prompt.lower())
+    return res is not None
 
 model = PapuGaPT2()
 task_model = TaskOrientedChatbot()
