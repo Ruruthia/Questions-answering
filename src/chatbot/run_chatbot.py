@@ -1,6 +1,7 @@
 from src.models.papugapt import PapuGaPT2
 from src.models.rule_based.model import TaskOrientedChatbot
 import re
+from pathlib import Path
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -63,7 +64,7 @@ def detect_task(raw_prompt: str) -> bool:
     return res is not None
 
 model = PapuGaPT2()
-task_model = TaskOrientedChatbot()
+task_model = TaskOrientedChatbot(Path(__file__).parent.parent)
 
 if __name__ == "__main__":
     prompt = None

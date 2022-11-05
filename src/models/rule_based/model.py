@@ -1,5 +1,6 @@
+import pandas as pd
 class TaskOrientedChatbot:
-    def __init__(self):
+    def __init__(self,  path: str="."):
         self._done = True
         self._collected_data = self._init_data()
         self._stage = 0
@@ -13,6 +14,9 @@ class TaskOrientedChatbot:
         "        4. confirm rechecking\n"
         "        5. recheck information\n"
         self._current_field = None
+        self.schedule = pd.merge(pd.merge(pd.read_csv(f"{path}/data/rule_based/schedule.csv", header=0),
+                                          pd.read_csv(f"{path}/data/rule_based/course.csv", header=0)),
+                                 pd.read_csv(f"{path}/data/rule_based/tutors.csv", header=0))
 
     def is_completed(self):
         return self._done
@@ -73,10 +77,12 @@ class TaskOrientedChatbot:
                 return v['question']
 
     def _retrive_info(self, prompt: str) -> type(None):
+        # TODO
         return None
 
-    def _check_answer(self, recheck: bool = False) -> bool | type(None):
-        return True
+    def _check_answer(self, recheck: bool = False) -> int | type(None):
+        # TODO
+        return 0
 
     def _check_data(self) -> type(None):
         for k, v in self._collected_data.items():
