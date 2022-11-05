@@ -80,6 +80,7 @@ class TaskOrientedChatbot:
                 return v['question']
 
     def _retrive_info(self, prompt: str) -> type(None):
+        # needs to be a bit more readable but works
         if self._current_field is not None:
             for v in self.schedule[self._current_field].values:
                 # TODO look for aliases
@@ -90,6 +91,7 @@ class TaskOrientedChatbot:
         return None
 
     def _check_answer(self, recheck: bool = False) -> int | type(None):
+        # needs to be a bit more readable but works
         res = 0
         curr_view = self.schedule.copy()
         for k, v in self._collected_data.items():
