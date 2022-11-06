@@ -14,8 +14,7 @@ class TaskOrientedChatbot:
         "           provide answer\n"
         "        3. confirm end\n"
         "           ask for rechecking\n"
-        "        4. confirm rechecking\n"
-        "        5. recheck information\n"
+        "        4. recheck information\n"
         self._current_field = None
         self.schedule = pd.merge(pd.merge(pd.read_csv(f"{path}/data/rule_based/schedule.csv", header=0),
                                           pd.read_csv(f"{path}/data/rule_based/course.csv", header=0)),
@@ -27,10 +26,10 @@ class TaskOrientedChatbot:
     @staticmethod
     def _init_data():
         return dict(
-            group=dict(
+            course=dict(
                 data_type=int,
                 value=None,
-                question="O którą grupę pytasz?",
+                question="O jaki przedmiot pytasz?",
                 check=False
             ),
             tutor=dict(
@@ -39,28 +38,22 @@ class TaskOrientedChatbot:
                 question="Kto prowadzi zajęcia?",
                 check=False
             ),
-            course=dict(
+            day=dict(
                 data_type=int,
                 value=None,
-                question="O jaki przedmiot pytasz?",
+                question="Którego dnia odbywają się zającia?",
                 check=False
             ),
-            # room=dict(
-            #     data_type=int,
-            #     value=None,
-            #     question="W jakiej sali odbywają się zajęcia?",
-            #     check=False
-            # ),
             start_hour=dict(
                 data_type=int,
                 value=None,
                 question="O której rozpoczynają się zającia?",
                 check=False
             ),
-            day=dict(
+            group=dict(
                 data_type=int,
                 value=None,
-                question="Którego dnia odbywają się zającia?",
+                question="O którą grupę pytasz?",
                 check=False
             )
         )
@@ -95,7 +88,7 @@ class TaskOrientedChatbot:
         res = 0
         curr_view = self.schedule.copy()
         for k, v in self._collected_data.items():
-            if v['value'] is None:
+            if (v['value'] is None) | (recheck and (not v['check'])):
                 res = None
             else:
                 curr_view = curr_view.loc[curr_view[k] == v['value'], :]
@@ -152,22 +145,15 @@ class TaskOrientedChatbot:
                 response = self._reset()
             else:
                 response = "Czy chcesz sprawdzić jeszcze raz?"
+                self._stage = 4
 
-        elif self._stage == 4:  # confirm rechecking
+        elif self._stage == 4:  # recheck info
             confirmation = self._detect_confirmation(prompt)
             if confirmation:
-                self._stage = 5
+                self._collected_data = self._init_data()
+                self._stage = 2
+                response = self._ask_for_data()
             else:
                 response = self._reset()
-
-        if self._stage == 5:  # recheck information
-            self._retrive_info(prompt)
-
-            ans = self._check_answer(recheck=True)
-            if ans is None:
-                response = self._check_data()
-            else:
-                response = f"Zajęcia odbywają się w sali {ans}. Czy to było pomocne?"
-                self._stage = 3
 
         return response
