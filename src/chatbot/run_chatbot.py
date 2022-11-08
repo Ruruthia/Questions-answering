@@ -26,24 +26,24 @@ A: Czy lubisz oglądać filmy?
 B: Lubię, zwłaszcza w kinie.
 A: Jaki jest Twój ulubiony gatunek?
 B: Najbardziej lubię filmy akcji.
-###
-"""
+###"""
 NUM_CONVERSATION_SAMPLES = len(CONVERSATION_SAMPLES.split('###')) - 1
 
-def modify_prompt(raw_prompt: str) -> str:
 
-    prompt_start = f"""A: {raw_prompt}
+def modify_prompt(raw_prompt: str, conversation_history: str) -> str:
+    prompt_start = f"""
+A: {raw_prompt}
 B:"""
 
-    return CONVERSATION_SAMPLES + prompt_start
+    return conversation_history + prompt_start
 
 
-def modify_response(response: str) -> str:
+def modify_response(response: str, history_len: int) -> str:
     # Take the first block after our samples
     # We can't simply take the last, as the model would sometimes generate '###' in response
     response = response.split('###')[NUM_CONVERSATION_SAMPLES]
-    # Leave only the part after the first 'B:'
-    response = response.partition('B:')[2]
+    # Leave only the part after the appropriate 'B:'
+    response = response.split('B:')[history_len + 1]
     # Leave only the first line
     response = response.partition('\n')[0]
     # Remove everything after the last '.', '!', or '?'.
@@ -53,9 +53,9 @@ def modify_response(response: str) -> str:
     return response.strip()
 
 
-def get_best_response(responses_list: list[str]) -> str:
+def get_best_response(responses_list: list[str], history_len: int) -> str:
     # TODO
-    return modify_response(responses_list[0])
+    return modify_response(responses_list[0], history_len)
 
 
 def detect_task(raw_prompt: str) -> bool:
@@ -69,6 +69,8 @@ task_model = TaskOrientedChatbot(Path(__file__).parent.parent)
 if __name__ == "__main__":
     prompt = None
     continue_task = False
+    history = ""
+    history_len = 0
     print("Przywitaj się")
     while True:
         prompt = input()
@@ -79,10 +81,13 @@ if __name__ == "__main__":
             continue_task = not task_model.is_completed()
             print(response)
         else:
+          prompt = modify_prompt(prompt, history)
           responses = model.respond_to_prompt(
-              prompt=modify_prompt(prompt),
+              prompt=CONVERSATION_SAMPLES + prompt,
               generation_config=GENERATION_CONFIG,
               end_sequence="###",
           )
-          print(get_best_response(responses))
-
+          response = get_best_response(responses, history_len)
+          print(response)
+          history_len += 1
+          history = f"{prompt} {response}"
