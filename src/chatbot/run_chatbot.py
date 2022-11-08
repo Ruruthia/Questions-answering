@@ -1,4 +1,7 @@
 from src.models.papugapt import PapuGaPT2
+from src.models.rule_based.model import TaskOrientedChatbot
+import re
+from pathlib import Path
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -55,22 +58,36 @@ def get_best_response(responses_list: list[str], history_len: int) -> str:
     return modify_response(responses_list[0], history_len)
 
 
+def detect_task(raw_prompt: str) -> bool:
+    pattern = re.compile(".*(gdzie|w której sali).*(zajęcia|ćwiczenia|wykład|laboratoria).*")
+    res = pattern.search(raw_prompt.lower())
+    return res is not None
+
 model = PapuGaPT2()
+task_model = TaskOrientedChatbot(Path(__file__).parent.parent)
 
 if __name__ == "__main__":
     prompt = None
+    continue_task = False
     history = ""
     history_len = 0
     print("Przywitaj się")
-    while prompt != END_OF_CONVERSATION_PROMPT:
+    while True:
         prompt = input()
-        prompt = modify_prompt(prompt, history)
-        responses = model.respond_to_prompt(
-            prompt=CONVERSATION_SAMPLES + prompt,
-            generation_config=GENERATION_CONFIG,
-            end_sequence="###",
-        )
-        response = get_best_response(responses, history_len)
-        print(response)
-        history_len += 1
-        history = f"{prompt} {response}"
+        if prompt == END_OF_CONVERSATION_PROMPT:
+            break
+        if continue_task or detect_task(prompt):
+            response = task_model.interact(prompt)
+            continue_task = not task_model.is_completed()
+            print(response)
+        else:
+          prompt = modify_prompt(prompt, history)
+          responses = model.respond_to_prompt(
+              prompt=CONVERSATION_SAMPLES + prompt,
+              generation_config=GENERATION_CONFIG,
+              end_sequence="###",
+          )
+          response = get_best_response(responses, history_len)
+          print(response)
+          history_len += 1
+          history = f"{prompt} {response}"

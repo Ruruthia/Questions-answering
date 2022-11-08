@@ -1,0 +1,11 @@
+group,tutor,course,room,start_hour,day,day_str
+0,2,4,119,8,1,wtorek
+0,2,4,119,8,3,czwartek
+1,2,4,141,10,3,czwartek
+0,1,2,137,12,0,poniedziałek
+1,1,2,119,14,0,poniedziałek
+2,1,2,137,16,1,wtorek
+0,1,3,4,14,1,wtorek
+0,0,0,137,10,2,środa
+0,0,1,119,10,3,czwartek
+1,0,1,109,12,3,czwartek
