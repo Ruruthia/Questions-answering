@@ -2,10 +2,10 @@ import re
 from pathlib import Path
 
 import numpy as np
-from gensim.models import KeyedVectors
 
 from src.models.papugapt import PapuGaPT2
 from src.models.rule_based.model import TaskOrientedChatbot
+from src.models.word2vec import Word2Vec
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -33,13 +33,11 @@ A: Jaki jest Twój ulubiony gatunek?
 B: Najbardziej lubię filmy akcji.
 ###"""
 NUM_CONVERSATION_SAMPLES = len(CONVERSATION_SAMPLES.split('###')) - 1
-# Downloaded from https://github.com/sdadas/polish-nlp-resources
-WORD_TO_VEC_PATH = str(Path(__file__).parent.parent / "data" / "word2vec" / "word2vec_100_3_polish.bin")
 VERBOSE = False
 
 model = PapuGaPT2()
+embeddings_model = Word2Vec()
 task_model = TaskOrientedChatbot(Path(__file__).parent.parent)
-embeddings = KeyedVectors.load(WORD_TO_VEC_PATH)
 
 
 def modify_prompt(raw_prompt: str, conversation_history: str) -> str:
@@ -76,31 +74,10 @@ def get_best_response(responses_list: list[str], history_len: int, prompt_embedd
     return scored_responses[0][0]
 
 
-def get_message_tokens(message: str) -> set[str]:
-    # This regex splits lowercased message on whitespaces and peels off punctuation
-    tokens = re.findall(r"[\w'\"]+|[,.!?]", message.lower())
-    tokens = [token for token in tokens if len(token) > 2]
-    return set(tokens)
-
-
-def get_embedding(message: str) -> np.array:
-    message_tokens = get_message_tokens(message)
-    tokens_embeddings = []
-    for token in message_tokens:
-        try:
-            token_embedding = embeddings.get_vector(token)
-        except KeyError:
-            continue
-        tokens_embeddings.append(token_embedding)
-    if len(tokens_embeddings) == 0:
-        return np.zeros(100)
-    return np.array(tokens_embeddings).mean(axis=0)
-
-
 def score_responses(prompt_embedding: np.array, responses: list[str]) -> list[(str, float)]:
     scored_responses = []
     for response in responses:
-        response_embedding = get_embedding(response)
+        response_embedding = embeddings_model.get_embedding(response)
         score = (prompt_embedding @ response_embedding) / (
                 np.linalg.norm(prompt_embedding) * np.linalg.norm(response_embedding) + 1e-100)
         scored_responses.append((response, score))
@@ -128,7 +105,7 @@ if __name__ == "__main__":
             continue_task = not task_model.is_completed()
             print(response)
         else:
-            prompt_embedding = get_embedding(prompt)
+            prompt_embedding = embeddings_model.get_embedding(prompt)
             prompt = modify_prompt(prompt, history)
             responses = model.respond_to_prompt(
                 prompt=CONVERSATION_SAMPLES + prompt,
