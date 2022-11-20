@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Optional, List
 from dataclasses import dataclass
 
@@ -6,20 +6,18 @@ from dataclasses import dataclass
 @dataclass
 class AnsweredQuestion:
     question: str
-    answer: str
+    answers: List[str]
 
 
 class QuestionsClusterer(ABC):
-
-    def cluster_questions(
+    @abstractmethod
+    def _cluster_questions(
             self,
-            questions_path: str,
-            answers_path: str
+            questions_answers_path: str,
     ) -> None:
         """
         Args:
-            questions_path: Path to file containing the questions to be clustered.
-            answers_path: Path to file containing the answers to the questions.
+            questions_answers_path: Path to file containing the questions and answers to be clustered.
 
         Returns:
             SUBJECT TO CHANGE.
@@ -29,6 +27,7 @@ class QuestionsClusterer(ABC):
             not other way round.
         """
 
+    @abstractmethod
     def cluster_single_question(
             self,
             question: str
@@ -43,6 +42,7 @@ class QuestionsClusterer(ABC):
             cluster_id: int, identificator of the cluster that the question belongs to.
         """
 
+    @abstractmethod
     def sample_questions_from_cluster(
             self,
             cluster_id: int,
