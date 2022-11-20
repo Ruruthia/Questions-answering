@@ -92,6 +92,8 @@ def get_embedding(message: str) -> np.array:
         except KeyError:
             continue
         tokens_embeddings.append(token_embedding)
+    if len(tokens_embeddings) == 0:
+        return np.zeros(100)
     return np.array(tokens_embeddings).mean(axis=0)
 
 
@@ -100,7 +102,7 @@ def score_responses(prompt_embedding: np.array, responses: list[str]) -> list[(s
     for response in responses:
         response_embedding = get_embedding(response)
         score = (prompt_embedding @ response_embedding) / (
-                np.linalg.norm(prompt_embedding) * np.linalg.norm(response_embedding))
+                np.linalg.norm(prompt_embedding) * np.linalg.norm(response_embedding) + 1e-100)
         scored_responses.append((response, score))
     return sorted(scored_responses, key=lambda x: x[1], reverse=True)
 
