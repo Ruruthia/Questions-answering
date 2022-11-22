@@ -16,10 +16,15 @@ np.random.seed(SEED)
 
 QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers' / 'def_question.tsv'
 GENERATION_CONFIG = {
+    "do_sample": True,
+    "top_k": 100,
+    "top_p": 0.75,
     "max_new_tokens": 5,
+    "num_beams": 2,
+    "no_repeat_ngram_size": 2,
 }
 NUM_CLUSTERS = 15
-QA_SAMPLED_FROM_CLUSTER = 5
+QA_SAMPLED_FROM_CLUSTER = 10
 
 
 def split_data(
@@ -36,7 +41,7 @@ def prepare_prompt(
 ) -> str:
     """
     Gets questions similar to the question
-    and prepares the prompt by processing the questions & answers and joining them using hte EOS token.
+    and prepares the prompt by processing the questions & answers and joining them using the EOS token.
     """
     cluster_id = clusterer.cluster_single_question(question)
     sampled_qas = clusterer.sample_questions_from_cluster(cluster_id, QA_SAMPLED_FROM_CLUSTER)
