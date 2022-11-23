@@ -14,7 +14,8 @@ SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 
-QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers' / 'def_question.tsv'
+# QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers' / 'def_question.tsv'
+QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'QA' / '2021-question-answering' / 'dev-0' / 'in.tsv'
 GENERATION_CONFIG = {
     "do_sample": True,
     "top_k": 100,
