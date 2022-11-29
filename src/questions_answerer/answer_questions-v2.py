@@ -25,7 +25,7 @@ GENERATION_CONFIG = {
     "num_beams": 2,
     "no_repeat_ngram_size": 2,
 }
-QA_SAMPLED_FROM_CLUSTER = 10
+QA_SAMPLED_FROM_CLUSTER = 4
 
 def prepare_prompt(
         question: str,
@@ -37,9 +37,9 @@ def prepare_prompt(
     """
     cluster_id = clusterer.cluster_single_question(question)
     sampled_qas = clusterer.sample_questions_from_cluster(cluster_id, QA_SAMPLED_FROM_CLUSTER, question)
-    return " ### ".join([" ".join(reversed(
-        q.question.replace("\n",  "").split(" "))) + ":  " + q.answers[0] for q in sampled_qas]) + \
-           " ### " + " ".join(reversed(question.replace("\n",  "").split(" "))) + ":  "
+    return "\n\n".join([" ".join(reversed(
+        q.question.replace("\n",  "").split(" ")[3:])) + ":  " + q.answers[0] for q in sampled_qas]) + \
+           "\n\n" + " ".join(reversed(question.replace("\n",  "").split(" "))) + ":  "
 
 
 with open(f"{QUESTIONS_ANSWERS_PATH_TEST}/expected.tsv", 'r') as f:
@@ -60,7 +60,7 @@ questions_answerer = PapuGaPT2()
 
 
 for (q, a) in test_data.items():
-    print(f"Pytanie: {q}")
+    print(f"Pytanie: {q}".replace('\n', ''))
     prompt = prepare_prompt(q, clusterer)
     response = questions_answerer.respond_to_prompt(
         prompt=prompt,
@@ -68,5 +68,5 @@ for (q, a) in test_data.items():
         end_sequence="###",
     )[0]
     # Get first word of the response
-    response = " ".join(response[len(prompt):].split(' ')[:3])
+    response = response[len(prompt):].split('\n')[0]
     print(f"Odpowiedź: {response}")
