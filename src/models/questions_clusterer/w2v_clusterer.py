@@ -1,4 +1,5 @@
 import csv
+import pickle
 import random
 from collections import defaultdict
 from pathlib import Path
@@ -20,18 +21,17 @@ def read_qa_tsv(questions_answers_path: str):
 
 
 class Word2VecClusterer(QuestionsClusterer):
-    def __init__(self, qa_dict: dict[str, List[str]], n_clusters=5):
+    def __init__(self, qa_dict: dict[str, List[str]], n_clusters=5, preprocess_question=lambda question: question):
         self._embeddings_model = Word2Vec()
         self._clustering_model = KMeans(n_clusters=n_clusters)
         self._cluster_to_answered_questions = None
+        self._preprocess_question=preprocess_question
 
         self._cluster_questions(qa_dict)
 
     def _cluster_questions(self, qa_dict: dict[str, List[str]]) -> None:
         questions = list(qa_dict.keys())
-        # Here, we remove first 3 words of the question, usually "Jak nazywa się...".
-        # It's not super smart, TODO: experiment
-        question_embeddings = [self._embeddings_model.get_embedding(" ".join(question.split()[3:]))
+        question_embeddings = [self._embeddings_model.get_embedding(self._preprocess_question(question))
                                for question in questions]
 
         clusters = self._clustering_model.fit_predict(question_embeddings)
@@ -41,13 +41,12 @@ class Word2VecClusterer(QuestionsClusterer):
         self._cluster_to_answered_questions = defaultdict(list)
         for cluster, answered_question in zip(clusters, answered_questions):
             self._cluster_to_answered_questions[cluster].append(answered_question)
-            # TODO: Improve saving of the clusters
-            file = open(QUESTIONS_ANSWERS_PATH / f'cluster_{cluster}', 'a+')
-            file.write(answered_question.question+'\n')
+
+        with open(QUESTIONS_ANSWERS_PATH / 'clusters.pkl', 'wb') as file:
+            pickle.dump(self._cluster_to_answered_questions, file)
 
     def cluster_single_question(self, question: str) -> int:
-        # Here, we remove first 3 words of the question, usually "Jak nazywa się..."
-        embedding = self._embeddings_model.get_embedding(" ".join(question.split()[3:]))
+        embedding = self._embeddings_model.get_embedding(self._preprocess_question(question))
         return self._clustering_model.predict([embedding])[0]
 
     def sample_questions_from_cluster(

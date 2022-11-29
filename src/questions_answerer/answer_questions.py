@@ -27,6 +27,11 @@ NUM_CLUSTERS = 15
 QA_SAMPLED_FROM_CLUSTER = 10
 
 
+def remove_three_first_words(question):
+    # Here, we remove first 3 words of the question, usually "Jak nazywa się..."
+    return " ".join(question.split()[3:])
+
+
 def split_data(
         questions_answers_path: str = str(QUESTIONS_ANSWERS_PATH),
 ) -> (dict[str, List[str]], dict[str, List[str]]):
@@ -52,22 +57,27 @@ def prepare_prompt(
     )
 
 
-print("Splitting data...")
-train_data, test_data = split_data()
-print("Initializing clusters...")
-# TODO: Switch between models
-w2v_clusterer = Word2VecClusterer(qa_dict=train_data, n_clusters=NUM_CLUSTERS)
-print("Clusters initialized!")
-questions_answerer = PapuGaPT2()
+if __name__ == '__main__':
+    print("Splitting data...")
+    train_data, test_data = split_data()
+    print("Initializing clusters...")
+    # TODO: Switch between models
+    w2v_clusterer = Word2VecClusterer(
+        qa_dict=train_data,
+        n_clusters=NUM_CLUSTERS,
+        preprocess_question=remove_three_first_words
+    )
+    print("Clusters initialized!")
+    questions_answerer = PapuGaPT2()
 
-for (q, a) in test_data.items():
-    print(f"Pytanie: {q}")
-    prompt = prepare_prompt(q, w2v_clusterer)
-    response = questions_answerer.respond_to_prompt(
-        prompt=prompt,
-        generation_config=GENERATION_CONFIG,
-        end_sequence="###",
-    )[0]
-    # Get first word of the response
-    response = response[len(prompt):].split(' ')[0]
-    print(f"Odpowiedź: {response}")
+    for (q, a) in test_data.items():
+        print(f"Pytanie: {q}")
+        prompt = prepare_prompt(q, w2v_clusterer)
+        response = questions_answerer.respond_to_prompt(
+            prompt=prompt,
+            generation_config=GENERATION_CONFIG,
+            end_sequence="###",
+        )[0]
+        # Get first word of the response
+        response = response[len(prompt):].split(' ')[0]
+        print(f"Odpowiedź: {response}")
