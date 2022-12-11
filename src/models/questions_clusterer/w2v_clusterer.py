@@ -1,4 +1,3 @@
-import csv
 import random
 from collections import defaultdict
 from pathlib import Path
@@ -8,15 +7,9 @@ from sklearn.cluster import KMeans
 
 from src.models.questions_clusterer.model import AnsweredQuestion, QuestionsClusterer
 from src.models.word2vec import Word2Vec
+from src.utils import read_qa_tsv
 
 QUESTIONS_ANSWERS_PATH = Path(__file__).parents[3] / 'data' / 'def_question.tsv'
-
-
-def _read_qa_tsv(questions_answers_path: str):
-    with open(questions_answers_path, 'r') as in_file:
-        csv_file = csv.reader(in_file, delimiter='\t')
-        qa_dict = {line[0]: line[1:] for line in csv_file}
-    return qa_dict
 
 
 class Word2VecClusterer(QuestionsClusterer):
@@ -28,7 +21,7 @@ class Word2VecClusterer(QuestionsClusterer):
         self._cluster_questions(str(questions_answers_path))
 
     def _cluster_questions(self, questions_answers_path: str) -> None:
-        qa_dict = _read_qa_tsv(questions_answers_path)
+        qa_dict = read_qa_tsv(questions_answers_path)
         questions = list(qa_dict.keys())
         question_embeddings = [self._embeddings_model.get_embedding(question) for question in questions]
 
