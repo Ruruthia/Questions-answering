@@ -30,4 +30,3 @@ class RetrievalModel(ABC):
     def answer_question(self, question: str) -> str:
         idx = self._match_question(question, self._definitions)
         return self._names[idx]
-
