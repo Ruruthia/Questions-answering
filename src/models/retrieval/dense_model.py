@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import numpy as np
 from numpy.linalg import norm
@@ -17,7 +18,7 @@ class DenseRetrievalModel(RetrievalModel):
     def __init__(self, definitions_path: str, embeddings_model: Embedder, definitions_embeddings_path: str) -> None:
         super().__init__(definitions_path)
         self._embeddings_model = embeddings_model
-        if os.path.exists(definitions_embeddings_path):
+        if Path(definitions_embeddings_path).is_file():
             with open(definitions_embeddings_path, 'rb') as f:
                 self._definitions_embeddings = np.load(f)
         else:
