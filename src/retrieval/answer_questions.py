@@ -14,16 +14,16 @@ QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers
 def create_model() -> RetrievalModel:
     # More embeddings can be found here: https://github.com/ksopyla/awesome-nlp-polish
     if MODEL_TYPE == "W2V":
-        definitions_embeddings_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'w2v_embeddings.npz'
+        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index.npz'
         model = DenseRetrievalModel(
             definitions_path=str(DEFINITIONS_PATH),
-            definitions_embeddings_path=str(definitions_embeddings_path),
+            index_path=str(index_path),
             embeddings_model=Word2Vec())
     elif MODEL_TYPE == "BERT":
-        definitions_embeddings_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'roberta_embeddings.npz'
+        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index.npz'
         model = DenseRetrievalModel(
             definitions_path=str(DEFINITIONS_PATH),
-            definitions_embeddings_path=str(definitions_embeddings_path),
+            index_path=str(index_path),
             embeddings_model=SentenceEmbedder())
     else:
         raise NotImplementedError()
@@ -36,7 +36,7 @@ def main():
     score = 0
 
     for question, correct_answers in data.items():
-        model_answer = model.answer_question(question, 25)
+        model_answer = model.answer_question(question, 1)
         if match(model_answer, correct_answers):
             print(question)
             print(correct_answers)
