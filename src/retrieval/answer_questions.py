@@ -3,6 +3,7 @@ from pathlib import Path
 from src.models.embedders.sentence_embedder import SentenceEmbedder
 from src.models.embedders.word2vec import Word2Vec
 from src.models.retrieval.dense_model import DenseRetrievalModel
+from src.models.retrieval.sparse_model import SparseRetrievalModel
 from src.models.retrieval.model import RetrievalModel
 from src.utils import read_qa_tsv, match
 
