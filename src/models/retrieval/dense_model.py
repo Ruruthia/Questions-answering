@@ -6,7 +6,9 @@ import numpy as np
 from numpy.linalg import norm
 from tqdm import tqdm
 
+import spacy
 from stempel import StempelStemmer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from collections import defaultdict as dd
 
 from src.models.embedders.model import Embedder
@@ -19,7 +21,7 @@ def preprocess_question(question: str) -> str:
 
 class DenseRetrievalModel(RetrievalModel):
 
-    def __init__(self, definitions_path: str, embeddings_model: Embedder, definitions_embeddings_path: str) -> None:
+    def __init__(self, definitions_path: str, embeddings_model: Embedder, index_path: str) -> None:
         super().__init__(definitions_path)
         self._embeddings_model = embeddings_model
         # #  probably we could embed only the needed definitions
@@ -38,30 +40,43 @@ class DenseRetrievalModel(RetrievalModel):
         #
         # print("Definitions embedded!")
 
-        self._index = dd(list)
         self._stemmer = StempelStemmer.polimorf()
+        self._nlp = spacy.load("pl_core_news_md")
 
-        # TODO: TF-IDF?
+        if Path(index_path).is_file():
+            with open(index_path, 'rb') as f:
+                self._index = np.load(f)
+        else:
 
-        for i in tqdm(range(len(self._definitions)), "Indexing"):
-            for word in self._definitions[i].split(" "):
-                self._index[self._stemmer.stem(word)].append(i)
+            self._index = dd(list)
+            def my_stem(word: str) -> str:
+                res = self._stemmer.stem(word)
+                return res if res is not None else ""
+
+            stemmed_definitions = [" ".join([my_stem(word) for word in definition.split(" ")]) for definition in self._definitions]
+            tfidf = TfidfVectorizer().fit(stemmed_definitions)
+
+
+            for i in tqdm(range(len(self._definitions)), "Indexing"):
+                definition = stemmed_definitions[i]
+                tfidf_scores = tfidf.transform([definition]).todense()
+                tokens = self._nlp(definition)
+                definition_words = definition.split(" ")
+                for j in range(len(definition_words)):
+                    if definition_words[j] in tfidf.vocabulary_.keys():
+                        self._index[tokens[j].lemma_].append((i, tfidf_scores[0, tfidf.vocabulary_[definition_words[j]]]))
+
+            with open(index_path, 'wb') as f:
+                np.save(f, self._index)
 
         print("Index provided!")
 
     def _get_probable_answers(self, question: str, max_answers: int = 10) -> list[int]:
         matches = dd(lambda: 0)
         for word in question.split(" "):
-            for i in self._index[self._stemmer.stem(word)]:
-                matches[i] += 1
+            for i, score in self._index[self._nlp(self._stemmer.stem(word))[0].lemma_]:
+                matches[i] += score
         return pd.Series(matches).sort_values(ascending=False).iloc[:max_answers].index.values.tolist()
-
-    # def _match_question(self, question: str, probable_answers: list[int]) -> int:
-    #     question_embedding = self._embeddings_model.get_embedding(preprocess_question(question))
-    #     closest_definition = (self._definitions_embeddings[probable_answers] @ question_embedding) / \
-    #                          (norm(self._definitions_embeddings[probable_answers]) * norm(question_embedding) + 1e-10)
-    #
-    #     return int(np.argmax(closest_definition))
 
 
     def _match_question(self, question: str, probable_answers: list[int]) -> int:

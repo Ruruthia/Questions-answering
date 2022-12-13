@@ -3,11 +3,10 @@ from pathlib import Path
 from src.models.embedders.sentence_embedder import SentenceEmbedder
 from src.models.embedders.word2vec import Word2Vec
 from src.models.retrieval.dense_model import DenseRetrievalModel
-from src.models.retrieval.sparse_model import SparseRetrievalModel
 from src.models.retrieval.model import RetrievalModel
 from src.utils import read_qa_tsv, match
 
-MODEL_TYPE = "BERT"
+MODEL_TYPE = "W2V"
 DEFINITIONS_PATH = Path(__file__).parents[2] / 'data' / 'retrieval' / 'plwiktionary.txt'
 QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers' / 'def_question.tsv'
 
@@ -37,7 +36,7 @@ def main():
     score = 0
 
     for question, correct_answers in data.items():
-        model_answer = model.answer_question(question)
+        model_answer = model.answer_question(question, 25)
         if match(model_answer, correct_answers):
             print(question)
             print(correct_answers)
@@ -45,8 +44,9 @@ def main():
             score += 1
 
     print(f"Accuracy: {100 * score / len(data):.2f} %")
-    # W2V: 4.45%
-    # BERT: 19.84%
+    # W2V: 4.45%  (+ Sparse 10: 11.34 %, 3: 10.12 %,
+    # SPARSE (with stemmer): 5.26 %
+    # BERT: 19.84% (+ Sparse 10: 13.77 %, 3: 10.12 %, 25: 17.41 %)
 
 
 if __name__ == '__main__':
