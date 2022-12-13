@@ -33,4 +33,4 @@ class Word2Vec(Embedder):
             tokens_embeddings.append(token_embedding)
         if len(tokens_embeddings) == 0:
             return np.zeros(100)
-        return np.array(tokens_embeddings).mean(axis=0)
+        return np.array(tokens_embeddings).mean(axis=0) + 1e-10
