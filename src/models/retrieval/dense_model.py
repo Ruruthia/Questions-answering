@@ -54,17 +54,19 @@ class DenseRetrievalModel(RetrievalModel):
                 return res if res is not None else ""
 
             stemmed_definitions = [" ".join([my_stem(word) for word in definition.split(" ")]) for definition in self._definitions]
-            tfidf = TfidfVectorizer().fit(stemmed_definitions)
+            # tfidf = TfidfVectorizer().fit(stemmed_definitions)
 
 
             for i in tqdm(range(len(self._definitions)), "Indexing"):
                 definition = stemmed_definitions[i]
-                tfidf_scores = tfidf.transform([definition]).todense()
+                # tfidf_scores = tfidf.transform([definition]).todense()
                 tokens = self._nlp(definition)
                 definition_words = definition.split(" ")
                 for j in range(len(definition_words)):
-                    if definition_words[j] in tfidf.vocabulary_.keys():
-                        self._index[tokens[j].lemma_].append((i, tfidf_scores[0, tfidf.vocabulary_[definition_words[j]]]))
+                    if j < len(tokens):
+                    # if definition_words[j] in tfidf.vocabulary_.keys():
+                        # self._index[tokens[j].lemma_].append((i, tfidf_scores[0, tfidf.vocabulary_[definition_words[j]]]))
+                        self._index[tokens[j].lemma_].append((i, 1))
 
             with open(index_path, 'wb') as f:
                 np.save(f, self._index)

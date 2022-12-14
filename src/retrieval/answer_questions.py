@@ -14,13 +14,13 @@ QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers
 def create_model() -> RetrievalModel:
     # More embeddings can be found here: https://github.com/ksopyla/awesome-nlp-polish
     if MODEL_TYPE == "W2V":
-        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index.npz'
+        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index_1.npz'
         model = DenseRetrievalModel(
             definitions_path=str(DEFINITIONS_PATH),
             index_path=str(index_path),
             embeddings_model=Word2Vec())
     elif MODEL_TYPE == "BERT":
-        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index.npz'
+        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index_1.npz'
         model = DenseRetrievalModel(
             definitions_path=str(DEFINITIONS_PATH),
             index_path=str(index_path),
