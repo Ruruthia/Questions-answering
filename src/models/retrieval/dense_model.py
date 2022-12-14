@@ -21,31 +21,31 @@ def preprocess_question(question: str) -> str:
 
 class DenseRetrievalModel(RetrievalModel):
 
-    def __init__(self, definitions_path: str, embeddings_model: Embedder, index_path: str) -> None:
+    def __init__(self, definitions_path: str, embeddings_model: Embedder, definitions_embeddings_path: str, index_path: str) -> None:
         super().__init__(definitions_path)
         self._embeddings_model = embeddings_model
-        # #  probably we could embed only the needed definitions
-        # if Path(definitions_embeddings_path).is_file():
-        #     with open(definitions_embeddings_path, 'rb') as f:
-        #         self._definitions_embeddings = np.load(f)
-        # else:
-        #     print("Embedding definitions...")
-        #     self._definitions_embeddings = []
-        #     for definition in tqdm(self._definitions):
-        #         self._definitions_embeddings.append(self._embeddings_model.get_embedding(definition))
-        #     self._definitions_embeddings = np.array(self._definitions_embeddings)
-        #
-        #     with open(definitions_embeddings_path, 'wb') as f:
-        #         np.save(f, self._definitions_embeddings)
-        #
-        # print("Definitions embedded!")
+
+        if Path(definitions_embeddings_path).is_file():
+            with open(definitions_embeddings_path, 'rb') as f:
+                self._definitions_embeddings = np.load(f)
+        else:
+            print("Embedding definitions...")
+            self._definitions_embeddings = []
+            for definition in tqdm(self._definitions):
+                self._definitions_embeddings.append(self._embeddings_model.get_embedding(definition))
+            self._definitions_embeddings = np.array(self._definitions_embeddings)
+
+            with open(definitions_embeddings_path, 'wb') as f:
+                np.save(f, self._definitions_embeddings)
+
+        print("Definitions embedded!")
 
         self._stemmer = StempelStemmer.polimorf()
         self._nlp = spacy.load("pl_core_news_md")
 
         if Path(index_path).is_file():
             with open(index_path, 'rb') as f:
-                self._index = np.load(f)
+                self._index = np.load(f, allow_pickle=True).tolist()
         else:
 
             self._index = dd(list)
@@ -84,12 +84,15 @@ class DenseRetrievalModel(RetrievalModel):
     def _match_question(self, question: str, probable_answers: list[int]) -> int:
         question_embedding = self._embeddings_model.get_embedding(preprocess_question(question))
 
-        definitions_embeddings = []
-        for i in probable_answers:
-            definitions_embeddings.append(self._embeddings_model.get_embedding(self._definitions[i]))
-        definitions_embeddings = np.array(definitions_embeddings)
+        # definitions_embeddings = []
+        # for i in probable_answers:
+        #     definitions_embeddings.append(self._embeddings_model.get_embedding(self._definitions[i]))
+        # definitions_embeddings = np.array(definitions_embeddings)
+        #
+        # closest_definition = (definitions_embeddings @ question_embedding) / \
+        #                      (norm(definitions_embeddings) * norm(question_embedding) + 1e-10)
 
-        closest_definition = (definitions_embeddings @ question_embedding) / \
-                             (norm(definitions_embeddings) * norm(question_embedding) + 1e-10)
+        closest_definition = (self._definitions_embeddings[probable_answers] @ question_embedding) / \
+                             (norm(self._definitions_embeddings[probable_answers]) * norm(question_embedding) + 1e-10)
 
         return probable_answers[int(np.argmax(closest_definition))]
