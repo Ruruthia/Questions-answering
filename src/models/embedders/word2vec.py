@@ -5,17 +5,20 @@ import numpy as np
 from gensim.models import KeyedVectors
 
 # Downloaded from https://github.com/sdadas/polish-nlp-resources
-WORD_TO_VEC_PATH = str(Path(__file__).parents[2] / "data" / "word2vec" / "word2vec_100_3_polish.bin")
+from src.models.embedders.model import Embedder
+
+WORD_TO_VEC_PATH = str(Path(__file__).parents[3] / "data" / "word2vec" / "word2vec_100_3_polish.bin")
 
 
 def _get_message_tokens(message: str) -> set[str]:
     # This regex splits lowercased message on whitespaces and peels off punctuation
     tokens = re.findall(r"[\w'\"]+|[,.!?]", message.lower())
-    tokens = [token for token in tokens if len(token) > 2]
+    # Longer words seem to have more meaningful embeddings
+    tokens = [token for token in tokens if len(token) > 4]
     return set(tokens)
 
 
-class Word2Vec:
+class Word2Vec(Embedder):
     def __init__(self, path=WORD_TO_VEC_PATH):
         self._embeddings = KeyedVectors.load(path)
 
@@ -30,4 +33,4 @@ class Word2Vec:
             tokens_embeddings.append(token_embedding)
         if len(tokens_embeddings) == 0:
             return np.zeros(100)
-        return np.array(tokens_embeddings).mean(axis=0)
+        return np.array(tokens_embeddings).mean(axis=0) + 1e-10
