@@ -10,7 +10,13 @@ from src.models.retrieval.model import RetrievalModel
 
 
 def preprocess_question(question: str) -> str:
-    return " ".join(question.split()[3:])[:-1]
+    for i, word in enumerate(question.split()):
+        if word.startswith("nazywa"):
+            break
+    question = question.split()[(i+1):]
+    if question[0] == "się":
+        question = question[1:]
+    return " ".join(question)[:-1]
 
 
 class DenseRetrievalModel(RetrievalModel):
