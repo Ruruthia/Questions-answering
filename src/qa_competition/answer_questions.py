@@ -9,7 +9,7 @@ from src.models.optional_questions.model import ABQuestionsAnswerer
 from src.models.papugapt import PapuGaPT2
 from src.models.questions_clusterer.w2v_clusterer import Word2VecClusterer
 from src.models.retrieval.dense_model import DenseRetrievalModel
-from src.utils import read_qa_tsv, scaled_editdist
+from src.utils import read_qa_tsv, scaled_editdist, match
 
 TRAIN_QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers' / 'def_question.tsv'
 QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'qa_competition' / 'task2_questions_with_answers.tsv'
@@ -39,6 +39,7 @@ MODELS = {
     "AB": ABQuestionsAnswerer(
         embedder=SentenceEmbedder()
     ),
+    "YN": PapuGaPT2(),
     "G": LanguageModelQuestionAnswerer(
         language_model=PapuGaPT2(),
         clusterer=Word2VecClusterer(
@@ -75,8 +76,7 @@ def choose_model(question: str):
     elif is_a_or_b_question(question):
         return MODELS["AB"]
     elif is_a_yes_no_question(question):
-        # return MODELS["YN"]
-        pass
+        return MODELS["YN"]
     else:
         return MODELS["G"]
 
@@ -84,16 +84,23 @@ def choose_model(question: str):
 def main():
     data = read_qa_tsv(questions_answers_path=str(QUESTIONS_ANSWERS_PATH))
     answers = []
-    for question, _ in tqdm(data.items()):
+    all_correct_answers = []
+    for question, correct_answers in tqdm(list(data.items())):
         current_model = choose_model(question)
-        if current_model is not None:
-            if isinstance(current_model, ABQuestionsAnswerer):
-                answer = current_model.answer_question(question)
-                answers.append(answer)
-                print(question)
-                print(answer)
-        with open(Path(__file__).parents[2] / 'data' / 'qa_competition' / 'answers.txt', 'w') as f:
-            f.writelines(answers)
+        if isinstance(current_model, PapuGaPT2):
+            answer = current_model.respond_to_yes_no_question(question)
+        else:
+            answer = current_model.answer_question(question)
+        answers.append(answer.split('\n')[0])
+        all_correct_answers.append(correct_answers)
+
+    with open(Path(__file__).parents[2] / 'data' / 'qa_competition' / 'answers.txt', 'w') as f:
+        for answer in answers:
+            f.write(f"{answer}\n")
+    with open(Path(__file__).parents[2] / 'data' / 'qa_competition' / 'correct_answers.txt', 'w') as f:
+        for answer in all_correct_answers:
+            line = "\t".join(answer)
+            f.write(f"{line}\n")
 
 
 if __name__ == '__main__':

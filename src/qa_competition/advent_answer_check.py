@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import editdistance
 
 rn = ['ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'xiii',
@@ -42,11 +44,11 @@ def match(ans: str, cor: str) -> bool:
 found_answers = []
 correct_answers = []
 
-for x in open('correct_answers.txt'):
+for x in open(Path(__file__).parents[2] / 'data' / 'qa_competition' / 'correct_answers.txt'):
     x = x.strip()
     correct_answers.append(x.lower().split('\t'))
 
-for x in open('found_answers.txt'):
+for x in open(Path(__file__).parents[2] / 'data' / 'qa_competition' / 'answers.txt'):
     x = x.strip()
     found_answers.append(x.lower())
 
@@ -54,6 +56,7 @@ N = len(correct_answers)
 score = 0.0
 
 for ans, cor in zip(found_answers, correct_answers):
+    print(ans, cor)
     if match(ans, cor):
         score += 1
 

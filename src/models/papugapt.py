@@ -11,12 +11,24 @@ class PapuGaPT2(LightningModule):
         self._tokenizer = AutoTokenizer.from_pretrained('flax-community/papuGaPT2')
         set_seed(42)
 
+    def respond_to_yes_no_question(self, question):
+        encoded_question = self._tokenizer.encode(question, return_tensors="pt")
+        continuation_logits = self._model(encoded_question).logits[0, -1]
+
+        yes_idx = self._tokenizer.encode("tak", return_tensors="pt")
+        no_idx = self._tokenizer.encode("nie", return_tensors="pt")
+        yes_score, no_score = continuation_logits[yes_idx], continuation_logits[no_idx]
+        if yes_score >= no_score:
+            return "tak"
+        else:
+            return "nie"
+
     def respond_to_prompt(
             self,
             prompt: str,
             generation_config: dict[str, Any],
             end_sequence: str,
-            ) -> list[str]:
+    ) -> list[str]:
         input_ids = self._tokenizer.encode(prompt, return_tensors='pt')
         output = self._model.generate(
             input_ids,
