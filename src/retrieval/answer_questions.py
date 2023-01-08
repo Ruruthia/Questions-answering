@@ -14,16 +14,20 @@ QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers
 def create_model() -> RetrievalModel:
     # More embeddings can be found here: https://github.com/ksopyla/awesome-nlp-polish
     if MODEL_TYPE == "W2V":
+        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index.npz'
         definitions_embeddings_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'w2v_embeddings.npz'
         model = DenseRetrievalModel(
             definitions_path=str(DEFINITIONS_PATH),
-            definitions_embeddings_path=str(definitions_embeddings_path),
+            index_path=str(index_path),
+            definitions_embeddings_path=definitions_embeddings_path,
             embeddings_model=Word2Vec())
     elif MODEL_TYPE == "BERT":
+        index_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'index.npz'
         definitions_embeddings_path = Path(__file__).parents[2] / 'data' / 'retrieval' / 'roberta_embeddings.npz'
         model = DenseRetrievalModel(
             definitions_path=str(DEFINITIONS_PATH),
-            definitions_embeddings_path=str(definitions_embeddings_path),
+            index_path=str(index_path),
+            definitions_embeddings_path=definitions_embeddings_path,
             embeddings_model=SentenceEmbedder())
     else:
         raise NotImplementedError()
@@ -36,16 +40,18 @@ def main():
     score = 0
 
     for question, correct_answers in data.items():
-        model_answer = model.answer_question(question)
+        model_answer = model.answer_question(question, 2)
         if match(model_answer, correct_answers):
-            print(question)
-            print(correct_answers)
-            print(model_answer)
             score += 1
+        print(question)
+        print(correct_answers)
+        print(model_answer)
+
 
     print(f"Accuracy: {100 * score / len(data):.2f} %")
-    # W2V: 4.45%
-    # BERT: 19.84%
+    # W2V: 4.45%  (+ Sparse 10: 11.34 %, 3: 10.12 %,
+    # SPARSE (with stemmer): 5.26 %
+    # BERT: 19.84% (+ Sparse 10: 13.77 %, 3: 10.12 %, 25: 17.41 %)
 
 
 if __name__ == '__main__':

@@ -8,8 +8,12 @@ class RetrievalModel(ABC):
         self._names: list[str] = []
         self._index_definitions(read_definitions(definitions_path))
 
+    def _get_probable_answers(self, question: str, max_answers: int = 10) -> list[int]:
+        """Sparse retrieval"""
+        pass
+
     @abstractmethod
-    def _match_question(self, question: str, definitions: list[str]) -> int:
+    def _match_question(self, question: str) -> int:
         """
         Finds the index of definition that best matches the question.
         Args:
@@ -24,9 +28,11 @@ class RetrievalModel(ABC):
     def _index_definitions(self, definitions_dict: dict[str, list[str]]):
         for name, defs in definitions_dict.items():
             for definition in defs:
-                self._definitions.append(definition)
-                self._names.append(name)
+                if definition is not None:
+                    self._definitions.append(definition)
+                    self._names.append(name)
 
-    def answer_question(self, question: str) -> str:
-        idx = self._match_question(question, self._definitions)
+    def answer_question(self, question: str, max_answers: int = 10) -> str:
+        idx_probab = self._get_probable_answers(question, max_answers)
+        idx = self._match_question(question, idx_probab)
         return self._names[idx]

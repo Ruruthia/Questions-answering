@@ -1,9 +1,15 @@
 import os
 from pathlib import Path
 
+import pandas as pd
 import numpy as np
 from numpy.linalg import norm
 from tqdm import tqdm
+
+import spacy
+from stempel import StempelStemmer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from collections import defaultdict as dd
 
 from src.models.embedders.model import Embedder
 from src.models.retrieval.model import RetrievalModel
@@ -21,9 +27,10 @@ def preprocess_question(question: str) -> str:
 
 class DenseRetrievalModel(RetrievalModel):
 
-    def __init__(self, definitions_path: str, embeddings_model: Embedder, definitions_embeddings_path: str) -> None:
+    def __init__(self, definitions_path: str, embeddings_model: Embedder, definitions_embeddings_path: str, index_path: str) -> None:
         super().__init__(definitions_path)
         self._embeddings_model = embeddings_model
+
         if Path(definitions_embeddings_path).is_file():
             with open(definitions_embeddings_path, 'rb') as f:
                 self._definitions_embeddings = np.load(f)
@@ -39,10 +46,59 @@ class DenseRetrievalModel(RetrievalModel):
 
         print("Definitions embedded!")
 
-    def _match_question(self, question: str, definitions: list[str]) -> int:
-        # TODO: How to combine dense + sparse model elegantly? Probably run answer questions differently
-        question_embedding = self._embeddings_model.get_embedding(preprocess_question(question))
-        closest_definition = (self._definitions_embeddings @ question_embedding) / \
-                             (norm(self._definitions_embeddings) * norm(question_embedding) + 1e-10)
+        self._stemmer = StempelStemmer.polimorf()
+        self._nlp = spacy.load("pl_core_news_md")
 
-        return int(np.argmax(closest_definition))
+        if Path(index_path).is_file():
+            with open(index_path, 'rb') as f:
+                self._index = np.load(f, allow_pickle=True).tolist()
+        else:
+
+            self._index = dd(list)
+            def my_stem(word: str) -> str:
+                res = self._stemmer.stem(word)
+                return res if res is not None else ""
+
+            stemmed_definitions = [" ".join([my_stem(word) for word in definition.split(" ")]) for definition in self._definitions]
+            # tfidf = TfidfVectorizer().fit(stemmed_definitions)
+
+
+            for i in tqdm(range(len(self._definitions)), "Indexing"):
+                definition = stemmed_definitions[i]
+                # tfidf_scores = tfidf.transform([definition]).todense()
+                tokens = self._nlp(definition)
+                definition_words = definition.split(" ")
+                for j in range(len(definition_words)):
+                    if j < len(tokens):
+                    # if definition_words[j] in tfidf.vocabulary_.keys():
+                        # self._index[tokens[j].lemma_].append((i, tfidf_scores[0, tfidf.vocabulary_[definition_words[j]]]))
+                        self._index[tokens[j].lemma_].append((i, 1))
+
+            with open(index_path, 'wb') as f:
+                np.save(f, self._index)
+
+        print("Index provided!")
+
+    def _get_probable_answers(self, question: str, max_answers: int = 10) -> list[int]:
+        matches = dd(lambda: 0)
+        for word in question.split(" "):
+            for i, score in self._index[self._nlp(self._stemmer.stem(word))[0].lemma_]:
+                matches[i] += score
+        return pd.Series(matches).sort_values(ascending=False).iloc[:max_answers].index.values.tolist()
+
+
+    def _match_question(self, question: str, probable_answers: list[int]) -> int:
+        question_embedding = self._embeddings_model.get_embedding(preprocess_question(question))
+
+        # definitions_embeddings = []
+        # for i in probable_answers:
+        #     definitions_embeddings.append(self._embeddings_model.get_embedding(self._definitions[i]))
+        # definitions_embeddings = np.array(definitions_embeddings)
+        #
+        # closest_definition = (definitions_embeddings @ question_embedding) / \
+        #                      (norm(definitions_embeddings) * norm(question_embedding) + 1e-10)
+
+        closest_definition = (self._definitions_embeddings[probable_answers] @ question_embedding) / \
+                             (norm(self._definitions_embeddings[probable_answers]) * norm(question_embedding) + 1e-10)
+
+        return probable_answers[int(np.argmax(closest_definition))]
