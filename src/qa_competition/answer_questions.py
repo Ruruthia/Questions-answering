@@ -2,14 +2,15 @@ import re
 from pathlib import Path
 
 from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.models.embedders.sentence_embedder import SentenceEmbedder
 from src.models.language_model_question_answerer.model import LanguageModelQuestionAnswerer
+from src.models.language_model_text_generator.model import LanguageModelTextGenerator
 from src.models.optional_questions.model import ABQuestionsAnswerer
-from src.models.papugapt import PapuGaPT2
 from src.models.questions_clusterer.w2v_clusterer import Word2VecClusterer
 from src.models.retrieval.dense_model import DenseRetrievalModel
-from src.utils import read_qa_tsv, scaled_editdist, match
+from src.utils import read_qa_tsv, scaled_editdist
 
 TRAIN_QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'questions_answers' / 'def_question.tsv'
 QUESTIONS_ANSWERS_PATH = Path(__file__).parents[2] / 'data' / 'qa_competition' / 'task2_questions_with_answers.tsv'
@@ -39,9 +40,15 @@ MODELS = {
     "AB": ABQuestionsAnswerer(
         embedder=SentenceEmbedder()
     ),
-    "YN": PapuGaPT2(),
+    "YN": LanguageModelTextGenerator(
+            model=AutoModelForCausalLM.from_pretrained('flax-community/papuGaPT2'),
+            tokenizer=AutoTokenizer.from_pretrained('flax-community/papuGaPT2')
+        ),
     "G": LanguageModelQuestionAnswerer(
-        language_model=PapuGaPT2(),
+        language_model=LanguageModelTextGenerator(
+            model=AutoModelForCausalLM.from_pretrained('flax-community/papuGaPT2'),
+            tokenizer=AutoTokenizer.from_pretrained('flax-community/papuGaPT2')
+        ),
         clusterer=Word2VecClusterer(
             qa_dict=read_qa_tsv(questions_answers_path=str(TRAIN_QUESTIONS_ANSWERS_PATH)),
             n_clusters=15,
@@ -87,7 +94,7 @@ def main():
     all_correct_answers = []
     for question, correct_answers in tqdm(list(data.items())):
         current_model = choose_model(question)
-        if isinstance(current_model, PapuGaPT2):
+        if isinstance(current_model, LanguageModelTextGenerator):
             answer = current_model.respond_to_yes_no_question(question)
         else:
             answer = current_model.answer_question(question)

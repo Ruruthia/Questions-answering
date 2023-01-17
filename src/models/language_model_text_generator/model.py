@@ -1,17 +1,17 @@
 from typing import Any
 
 from pytorch_lightning import LightningModule
-from transformers import set_seed, AutoTokenizer, AutoModelForCausalLM
+from transformers import set_seed, AutoTokenizer, AutoModelForCausalLM, PreTrainedTokenizer, PreTrainedModel
 
 
-class PapuGaPT2(LightningModule):
-    def __init__(self):
+class LanguageModelTextGenerator(LightningModule):
+    def __init__(self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer) -> None:
         super().__init__()
-        self._model = AutoModelForCausalLM.from_pretrained('flax-community/papuGaPT2')
-        self._tokenizer = AutoTokenizer.from_pretrained('flax-community/papuGaPT2')
+        self._model = model
+        self._tokenizer = tokenizer
         set_seed(42)
 
-    def respond_to_yes_no_question(self, question):
+    def respond_to_yes_no_question(self, question: str) -> str:
         encoded_question = self._tokenizer.encode(question, return_tensors="pt")
         continuation_logits = self._model(encoded_question).logits[0, -1]
 
