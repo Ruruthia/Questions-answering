@@ -114,7 +114,6 @@ if __name__ == "__main__":
             responses = model.respond_to_prompt(
                 prompt=CONVERSATION_SAMPLES + prompt,
                 generation_config=GENERATION_CONFIG,
-                end_sequence="###",
             )
             response = get_best_response(
                 responses_list=responses,
