@@ -24,7 +24,6 @@ class LanguageModelQuestionAnswerer:
         response = self._language_model.respond_to_prompt(
             prompt=prompt,
             generation_config=self._generation_config,
-            end_sequence="###",
         )[0]
         # Get first word of the response
         response = response[len(prompt):].split(' ')[0]
