@@ -2,10 +2,11 @@ import re
 from pathlib import Path
 
 import numpy as np
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.models.papugapt import PapuGaPT2
+from src.models.language_model_text_generator.model import LanguageModelTextGenerator
 from src.models.rule_based.model import TaskOrientedChatbot
-from src.models.word2vec import Word2Vec
+from src.models.embedders.word2vec import Word2Vec
 
 END_OF_CONVERSATION_PROMPT = "Do widzenia!"
 GENERATION_CONFIG = {
@@ -35,7 +36,10 @@ B: Najbardziej lubię filmy akcji.
 NUM_CONVERSATION_SAMPLES = len(CONVERSATION_SAMPLES.split('###')) - 1
 VERBOSE = False
 
-model = PapuGaPT2()
+model = LanguageModelTextGenerator(
+            model=AutoModelForCausalLM.from_pretrained('flax-community/papuGaPT2'),
+            tokenizer=AutoTokenizer.from_pretrained('flax-community/papuGaPT2')
+        )
 embeddings_model = Word2Vec()
 task_model = TaskOrientedChatbot(Path(__file__).parent.parent)
 
@@ -110,7 +114,6 @@ if __name__ == "__main__":
             responses = model.respond_to_prompt(
                 prompt=CONVERSATION_SAMPLES + prompt,
                 generation_config=GENERATION_CONFIG,
-                end_sequence="###",
             )
             response = get_best_response(
                 responses_list=responses,
