@@ -1,4 +1,5 @@
 import click
+from awscli.compat import raw_input
 from transformers import BlenderbotTokenizer, BlenderbotForConditionalGeneration
 
 from src.chatscript.client import ChatScriptClient
@@ -6,8 +7,8 @@ from src.models.language_model_text_generator.model import LanguageModelTextGene
 from src.models.translator.model import Translator
 from src.utils import modify_prompt, modify_response
 
-FALLBACK_MESSAGE = ' '
-END_OF_CONVERSATION_PROMPT = ':quit'
+FALLBACK_MESSAGE = 'Keywordless'
+END_OF_CONVERSATION_PROMPT = ':koniec'
 
 GENERATION_CONFIG = {
     "max_new_tokens": 50
@@ -23,7 +24,7 @@ def run_chatbot(
 ) -> None:
     history: list[str] = []
 
-    print("Hi " + name + ", enter ':quit' to end this session")
+    print("Hej " + name + ", wpisz ':koniec' by zakończyć tą sesję")
 
     prompt = input(f"[{name}]: ").lower().strip()
     while prompt != END_OF_CONVERSATION_PROMPT:
@@ -40,12 +41,10 @@ def run_chatbot(
         response = cs_client.send_and_receive_message(msg)
 
         if response is None:
-            raise RuntimeError("Error communicating with Chat Server")
+            raise RuntimeError("Błąd komunikacji z Chat Scriptem")
 
         elif response == FALLBACK_MESSAGE:
-            print("FALLBACK")
             modified_prompt = modify_prompt(prompt, history, model.tokenizer)
-            print(modified_prompt)
             response = model.respond_to_prompt(
                 prompt=modified_prompt,
                 generation_config=GENERATION_CONFIG,
@@ -60,7 +59,7 @@ def run_chatbot(
         response = translator.translate(response, source_lang="EN", target_lang="PL")
         print(f"[{bot}]: {response}")
 
-        prompt = input(f"[{name}]: ").lower().strip()
+        prompt = raw_input(f"[{name}]: ").lower().strip()
 
 
 @click.command()
